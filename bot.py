@@ -23,7 +23,7 @@ class LobbyButton(discord.ui.View):
                 await interaction.response.edit_message(view=self)
                 return
         
-        if instances[interaction.guild_id].add(interaction.user.id):
+        if instances[interaction.guild_id].add(interaction.user):
             await interaction.response.send_message(f"{interaction.user.mention} has joined the lobby.")
         else: await interaction.response.send_message("You have already joined the lobby", ephemeral=True)
         
@@ -49,5 +49,17 @@ async def createLobby(interaction: discord.Interaction, number_of_players: int):
         instances[interaction.guild_id] = game.gameInstance(number_of_players=number_of_players)
         await interaction.response.send_message(view=LobbyButton())
     else: await interaction.response.send_message("There is already an existing lobby in this server, use ***/newgame*** to create a new lobby.")
+
+@bot.tree.command(name='start', description='starts the game after the lobby is full.')
+async def start(interaction: discord.Interaction):
+    if not instances[interaction.guild_id].is_space_available():
+        if not instances[interaction.guild_id].is_playing():
+            instances[interaction.guild_id].start()
+
+            await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
+        else:
+            await interaction.response.send_message("Game is already started, if you want to create a new game, use ***/newgame***.")
+    else:
+        await interaction.response.send_message("The lobby is not full yet, if you want to start the game with less players recreate the lobby with ***/newgame*** and select the correct amount of players.", ephemeral=True)
 
 bot.run(token)

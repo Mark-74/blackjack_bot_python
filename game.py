@@ -5,10 +5,11 @@ class gameInstance:
 
     def __init__(self, number_of_players: int) -> None:
         self.number_of_players = number_of_players
-        self.players_id = []
-        self.player_decks = dict()
+        self.players_user = []
+        self.player_decks = dict() #discord.user.User -> list[str]
         self.dealer_deck = []
         self.current_player = -1
+        self.status = False #is_playing
         self.deck = [ 'DA', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DJ', 'DK', 'DQ', #Diamonds
                       'HA', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HJ', 'HK', 'HQ', #Hearts
                       'SA', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'SJ', 'SK', 'SQ', #Spades
@@ -26,22 +27,26 @@ class gameInstance:
             self.deck[random_pos1] = self.deck[random_pos2]
             self.deck[random_pos2] = temp
     
-    def add(self, player_id: discord.user.User.id) -> bool:
-        if not player_id in self.players_id and len(self.players_id) < self.maxPlayers:
-            self.players_id.append(player_id)
+    def add(self, player: discord.user.User) -> bool:
+        if not player in self.players_user and len(self.players_user) < self.maxPlayers:
+            self.players_user.append(player)
             return True
         else: return False
     
     def is_space_available(self) -> bool:
         #returns true if there's space, else returns false
-        return self.number_of_players != len(self.players_id)
+        return self.number_of_players != len(self.players_user)
+    
+    def is_playing(self) -> bool:
+        return self.status
     
     def start(self) -> bool:
-        if len(self.players_id) != self.number_of_players: return False #cannot start
+        self.status = True #update status
+        if len(self.players_user) != self.number_of_players: return False #cannot start
         self.shuffle()
 
         for i in range(self.number_of_players):
-            self.player_decks[self.players_id[i]] = []
+            self.player_decks[self.players_user[i]] = []
         
         #give 2 cards to each player
         for deck in self.player_decks.values():
@@ -57,6 +62,6 @@ class gameInstance:
     def briefing(self) -> str:
         result = ""
 
-        for player in self.players_id:
-            result += f"{player}, your cards are {self.player_decks[player]}\n"
+        for player in self.players_user:
+            result += f"{player.mention}, your cards are {self.player_decks[player]}\n"
         return result
