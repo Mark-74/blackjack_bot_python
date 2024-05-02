@@ -19,7 +19,32 @@ class gameInstance:
                       'SA', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'SJ', 'SK', 'SQ', #Spades
                       'CA', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'CJ', 'CK', 'CQ', #Clubs
                     ]
+    
+    @staticmethod
+    def Value(card: str, ace_to_11 = False) -> int:
+        if card[1] == 'A':
+            if ace_to_11: return 11
+            else: return 1
+        elif card[1] == 'J' or card[1] == 'K' or card[1] == 'Q':
+            return 10
+        else: 
+            return int(card[1:])
         
+    def get_sum_of(self, player: discord.user.User):
+        sum = 0
+
+        deck = self.player_decks[player]  
+        pivot = 1 if deck[0][1] == 'A' and deck[1][1] == 'A' else 2
+ 
+        for i in range(len(deck)):
+            sum += self.Value(deck[i]) if i >= pivot else self.Value(deck[i], ace_to_11=True)
+        
+        if sum > 21 and (deck[0][1] == 'A' or deck[1][1] == 'A'):
+            sum = 0
+            for card in deck: sum += self.Value(card)
+        
+        return sum
+     
     def shuffle(self):
         for i in range(len(self.deck)):
             random_pos1, random_pos2 = random.randint(0, len(self.deck)-1), random.randint(0, len(self.deck)-1)
@@ -65,3 +90,10 @@ class gameInstance:
         for player in self.players_user:
             result += f"{player.mention}, your cards are {self.player_decks[player]}\n"
         return result
+    
+    def round(self, interaction: discord.Interaction) -> bool:
+        
+
+        #returns true if the game continues, else returns false
+
+        interaction.channel.send() #TODO: send 2 buttons to pick a card or to keep

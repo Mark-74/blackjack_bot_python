@@ -54,9 +54,11 @@ async def createLobby(interaction: discord.Interaction, number_of_players: int):
 async def start(interaction: discord.Interaction):
     if not instances[interaction.guild_id].is_space_available():
         if not instances[interaction.guild_id].is_playing():
-            instances[interaction.guild_id].start()
 
+            #starting the game
+            instances[interaction.guild_id].start()
             await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
+
         else:
             await interaction.response.send_message("Game is already started, if you want to create a new game, use ***/newgame***.")
     else:
