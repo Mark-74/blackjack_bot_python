@@ -32,6 +32,10 @@ class gameInstance:
             return True
         else: return False
     
+    def is_space_available(self) -> bool:
+        #returns true if there's space, else returns false
+        return self.number_of_players != len(self.players_id)
+    
     def start(self) -> bool:
         if len(self.players_id) != self.number_of_players: return False #cannot start
         self.shuffle()

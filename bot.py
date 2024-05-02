@@ -1,4 +1,4 @@
-import discord, os
+import discord, os, game
 from discord.ext import commands
 from discord import app_commands
 from typing import Optional
@@ -11,27 +11,22 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 instances = dict()
 
-servers = dict()
-
 #class lobby button
 class LobbyButton(discord.ui.View):
-    def __init__(self, *, timeout=180):
+    def __init__(self, *, timeout=60):
         super().__init__(timeout=timeout)
     
     @discord.ui.button(label="Enter the lobby",style=discord.ButtonStyle.blurple)
-    async def btnEnterLobby(self,interaction:discord.Interaction, button:discord.ui.Button):  #dio cane         
+    async def btnEnterLobby(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if not instances[interaction.guild_id].is_space_available():
+                button.disabled = True
+                await interaction.response.edit_message(view=self)
+                return
         
-        #se il server non è presente nel dizionario server lo aggiungo
-        if interaction.guild.id not in servers:
-            servers[interaction.guild.id] = interaction.guild.name
+        if instances[interaction.guild_id].add(interaction.user.id):
+            await interaction.response.send_message(f"{interaction.user.mention} has joined the lobby.")
+        else: await interaction.response.send_message("You have already joined the lobby", ephemeral=True)
         
-        instances[interaction.guild_id] = #classe
-         
-        #prendo l'id dell'utente che preme il bottone, 
-        if not instances[interaction.guild_id].add(interaction.user_id):      #se non è presente e la lobby non è piena lo aggiungo altrimenti 
-            await interaction.response.send_message("I'm sorry, lobby is full :0")
-
-
 @bot.event
 async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("BlackJack"))
@@ -50,6 +45,9 @@ async def spooky(interaction: discord.Interaction):
 
 @bot.tree.command(name='lobby', description='creates a lobby.')
 async def createLobby(interaction: discord.Interaction, number_of_players: int):
-    await interaction.channel.send(view=LobbyButton()) # Send a message with our View class that contains the button
+    if not instances.get(interaction.guild_id):
+        instances[interaction.guild_id] = game.gameInstance(number_of_players=number_of_players)
+        await interaction.response.send_message(view=LobbyButton())
+    else: await interaction.response.send_message("There is already an existing lobby in this server, use ***/newgame*** to create a new lobby.")
 
 bot.run(token)
