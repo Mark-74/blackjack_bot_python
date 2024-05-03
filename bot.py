@@ -55,7 +55,7 @@ async def start(interaction: discord.Interaction):
     if instances[interaction.guild_id].is_playing() is False:
         instances[interaction.guild_id].start()
         await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
-        await instances[interaction.guild_id].round(interaction=interaction)
+        await instances[interaction.guild_id].round(channel=interaction.channel)
     else:
         await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***", ephemeral=True)
 

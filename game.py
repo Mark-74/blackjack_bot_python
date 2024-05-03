@@ -1,8 +1,8 @@
-import discord, os, random
+import discord, os, random, datetime
 from discord.ui import View
 
 class Choices(discord.ui.View):
-    def __init__(self, *, timeout=60):
+    def __init__(self, *, timeout=60, user: discord.user.User):
             super().__init__(timeout=timeout)
     
     @discord.ui.button(label="Take", emoji='🃏', custom_id='choice-take', style=discord.ButtonStyle.success)
@@ -14,6 +14,8 @@ class Choices(discord.ui.View):
         print("No")
     
     @discord.ui.button(label="Double", emoji='💸', custom_id='choice-double', style=discord.ButtonStyle.blurple)
+    async def btnDouble(self, interaction:discord.Interaction, button:discord.ui.Button):
+        print("Double")
 
     async def on_timeout(self) -> None:
         print("timed out")
@@ -109,9 +111,12 @@ class gameInstance:
             result += f"{player.mention}, your cards are {self.player_decks[player]}\n"
         return result
     
-    async def round(self, interaction: discord.Interaction) -> bool:
+    async def round(self, channel: discord.channel) -> bool:
         
+        player = self.players_user[self.current_player]
         #returns true if the game continues, else returns false
-        View = Choices()
-        
-        await interaction.channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", view=View)
+        View = Choices(user=self.players_user[self.current_player])
+        embed = discord.Embed(title=f"{player}'s hand", description="Take a close look at your **cards** and decide what to do next!", color=0x5738d2) #TODO: add timestamp
+        embed.add_field(name="Your cards", value=self.player_decks[self.players_user[self.current_player]], inline=False)
+        embed.set_footer(text="---------------------------------------------------------------------------------")
+        await channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", embed=embed, view=View)
