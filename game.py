@@ -1,25 +1,22 @@
 import discord, os, random
 from discord.ui import View
 
-class YesButton(discord.ui.View):
-        def __init__(self, *, timeout=60):
-            super().__init__(timeout=timeout)
-        
-        @discord.ui.button(label="Pick 🃏", custom_id='yes', style=discord.ButtonStyle.success)
-        async def btnYes(self, interaction:discord.Interaction, button:discord.ui.Button):
-            pass
-
-class NoButton(discord.ui.View):
+class Choices(discord.ui.View):
     def __init__(self, *, timeout=60):
-        super().__init__(timeout=timeout)
-        
-    @discord.ui.button(label="Pick 🃏", custom_id='no', style=discord.ButtonStyle.danger)
+            super().__init__(timeout=timeout)
+    
+    @discord.ui.button(label="Take", emoji='🃏', custom_id='choice-take', style=discord.ButtonStyle.success)
+    async def btnYes(self, interaction:discord.Interaction, button:discord.ui.Button):
+        print("Yes")
+    
+    @discord.ui.button(label="Keep", emoji='🖐', custom_id='choice-keep', style=discord.ButtonStyle.danger)
     async def btnNo(self, interaction:discord.Interaction, button:discord.ui.Button):
-        pass
+        print("No")
+    
+    @discord.ui.button(label="Double", emoji='💸', custom_id='choice-double', style=discord.ButtonStyle.blurple)
 
     async def on_timeout(self) -> None:
-        pass
-
+        print("timed out")
 
 class gameInstance:
     maxPlayers = 4
@@ -115,9 +112,6 @@ class gameInstance:
     async def round(self, interaction: discord.Interaction) -> bool:
         
         #returns true if the game continues, else returns false
+        View = Choices()
         
-        view = View()
-        view.children.append(YesButton())
-        view.children.append(NoButton())
-
-        await interaction.channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", view=view)
+        await interaction.channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", view=View)
