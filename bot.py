@@ -13,7 +13,7 @@ instances = dict()
 
 #class lobby button
 class LobbyButton(discord.ui.View):
-    def __init__(self, *, timeout=60):
+    def __init__(self, *, timeout=10):
         super().__init__(timeout=timeout)
     
     @discord.ui.button(label="Enter the lobby",style=discord.ButtonStyle.blurple)
@@ -50,11 +50,12 @@ async def createLobby(interaction: discord.Interaction):
         await interaction.response.send_message(view=LobbyButton())
     else: await interaction.response.send_message("There is already an existing lobby in this server, use ***/newgame*** to create a new lobby.")
 
-@bot.tree.command(name='start', description='starts the game after the lobby is full.')
+@bot.tree.command(name='start', description='starts the game.')
 async def start(interaction: discord.Interaction):
     if instances[interaction.guild_id].is_playing() is False:
         instances[interaction.guild_id].start()
         await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
+        await instances[interaction.guild_id].round(interaction=interaction)
     else:
         await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***")
 

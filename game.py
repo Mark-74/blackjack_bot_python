@@ -1,4 +1,25 @@
 import discord, os, random
+from discord.ui import View
+
+class YesButton(discord.ui.View):
+        def __init__(self, *, timeout=60):
+            super().__init__(timeout=timeout)
+        
+        @discord.ui.button(label="Pick 🃏", custom_id='yes', style=discord.ButtonStyle.success)
+        async def btnYes(self, interaction:discord.Interaction, button:discord.ui.Button):
+            pass
+
+class NoButton(discord.ui.View):
+    def __init__(self, *, timeout=60):
+        super().__init__(timeout=timeout)
+        
+    @discord.ui.button(label="Pick 🃏", custom_id='no', style=discord.ButtonStyle.danger)
+    async def btnNo(self, interaction:discord.Interaction, button:discord.ui.Button):
+        pass
+
+    async def on_timeout(self) -> None:
+        pass
+
 
 class gameInstance:
     maxPlayers = 4
@@ -8,7 +29,7 @@ class gameInstance:
         self.players_user = []
         self.player_decks = dict() #discord.user.User -> list[str]
         self.dealer_deck = []
-        self.current_player = -1
+        self.current_player = 0
         self.status = False #is_playing
         self.deck = [ 'DA', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DJ', 'DK', 'DQ', #Diamonds
                       'HA', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HJ', 'HK', 'HQ', #Hearts
@@ -65,7 +86,7 @@ class gameInstance:
     
     def is_playing(self) -> bool:
         return self.status
-    
+
     def start(self) -> bool:
         self.status = True #update status
         self.shuffle()
@@ -91,9 +112,12 @@ class gameInstance:
             result += f"{player.mention}, your cards are {self.player_decks[player]}\n"
         return result
     
-    def round(self, interaction: discord.Interaction) -> bool:
+    async def round(self, interaction: discord.Interaction) -> bool:
         
-
         #returns true if the game continues, else returns false
+        
+        view = View()
+        view.children.append(YesButton())
+        view.children.append(NoButton())
 
-        interaction.channel.send() #TODO: send 2 buttons to pick a card or to keep
+        await interaction.channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", view=view)
