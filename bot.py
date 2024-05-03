@@ -44,24 +44,18 @@ async def spooky(interaction: discord.Interaction):
     await interaction.response.send_message(file=file)
 
 @bot.tree.command(name='lobby', description='creates a lobby.')
-async def createLobby(interaction: discord.Interaction, number_of_players: int):
+async def createLobby(interaction: discord.Interaction):
     if not instances.get(interaction.guild_id):
-        instances[interaction.guild_id] = game.gameInstance(number_of_players=number_of_players)
+        instances[interaction.guild_id] = game.gameInstance()
         await interaction.response.send_message(view=LobbyButton())
     else: await interaction.response.send_message("There is already an existing lobby in this server, use ***/newgame*** to create a new lobby.")
 
 @bot.tree.command(name='start', description='starts the game after the lobby is full.')
 async def start(interaction: discord.Interaction):
-    if not instances[interaction.guild_id].is_space_available():
-        if not instances[interaction.guild_id].is_playing():
-
-            #starting the game
-            instances[interaction.guild_id].start()
-            await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
-
-        else:
-            await interaction.response.send_message("Game is already started, if you want to create a new game, use ***/newgame***.")
+    if instances[interaction.guild_id].is_playing() is False:
+        instances[interaction.guild_id].start()
+        await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
     else:
-        await interaction.response.send_message("The lobby is not full yet, if you want to start the game with less players recreate the lobby with ***/newgame*** and select the correct amount of players.", ephemeral=True)
+        await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***")
 
 bot.run(token)

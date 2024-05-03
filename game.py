@@ -3,8 +3,8 @@ import discord, os, random
 class gameInstance:
     maxPlayers = 4
 
-    def __init__(self, number_of_players: int) -> None:
-        self.number_of_players = number_of_players
+    def __init__(self) -> None:
+        self.number_of_players = 0
         self.players_user = []
         self.player_decks = dict() #discord.user.User -> list[str]
         self.dealer_deck = []
@@ -55,19 +55,19 @@ class gameInstance:
     def add(self, player: discord.user.User) -> bool:
         if not player in self.players_user and len(self.players_user) < self.maxPlayers:
             self.players_user.append(player)
+            self.number_of_players += 1
             return True
         else: return False
     
     def is_space_available(self) -> bool:
         #returns true if there's space, else returns false
-        return self.number_of_players != len(self.players_user)
+        return self.maxPlayers != len(self.players_user) and self.is_playing() is False 
     
     def is_playing(self) -> bool:
         return self.status
     
     def start(self) -> bool:
         self.status = True #update status
-        if len(self.players_user) != self.number_of_players: return False #cannot start
         self.shuffle()
 
         for i in range(self.number_of_players):
