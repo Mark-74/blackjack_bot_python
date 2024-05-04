@@ -73,7 +73,6 @@ class Choices(discord.ui.View):
     async def btnDouble(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == instances[interaction.guild_id].get_current_player():
             curr = instances[interaction.guild_id]
-            player = curr.get_current_player()
 
             if curr.has_won(interaction.user):
                 print("won")
