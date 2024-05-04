@@ -1,24 +1,5 @@
 import discord, os, random, datetime
-from discord.ui import View
 
-class Choices(discord.ui.View):
-    def __init__(self, *, timeout=60, user: discord.user.User):
-            super().__init__(timeout=timeout)
-    
-    @discord.ui.button(label="Take", emoji='🃏', custom_id='choice-take', style=discord.ButtonStyle.success)
-    async def btnYes(self, interaction:discord.Interaction, button:discord.ui.Button):
-        print("Yes")
-    
-    @discord.ui.button(label="Keep", emoji='🖐', custom_id='choice-keep', style=discord.ButtonStyle.danger)
-    async def btnNo(self, interaction:discord.Interaction, button:discord.ui.Button):
-        print("No")
-    
-    @discord.ui.button(label="Double", emoji='💸', custom_id='choice-double', style=discord.ButtonStyle.blurple)
-    async def btnDouble(self, interaction:discord.Interaction, button:discord.ui.Button):
-        print("Double")
-
-    async def on_timeout(self) -> None:
-        print("timed out")
 
 class gameInstance:
     maxPlayers = 4
@@ -85,6 +66,17 @@ class gameInstance:
     
     def is_playing(self) -> bool:
         return self.status
+    
+    def get_current_player(self) -> discord.User:
+        return self.players_user[self.current_player]
+    
+    def get_deck_from_player(self, player=discord.User) -> str:
+        return self.player_decks[player]
+    
+    def next_player(self) -> bool:
+        #returns true if the game can continue, otherwise no
+        self.current_player += 1
+        return True if self.current_player < self.number_of_players else False
 
     def start(self) -> bool:
         self.status = True #update status
@@ -111,12 +103,12 @@ class gameInstance:
             result += f"{player.mention}, your cards are {self.player_decks[player]}\n"
         return result
     
-    async def round(self, channel: discord.channel) -> bool:
-        
-        player = self.players_user[self.current_player]
-        #returns true if the game continues, else returns false
-        View = Choices(user=self.players_user[self.current_player])
-        embed = discord.Embed(title=f"{player}'s hand", description="Take a close look at your **cards** and decide what to do next!", color=0x5738d2) #TODO: add timestamp
-        embed.add_field(name="Your cards", value=self.player_decks[self.players_user[self.current_player]], inline=False)
-        embed.set_footer(text="---------------------------------------------------------------------------------")
-        await channel.send(content=f"{self.players_user[self.current_player].mention} would you like another card?", embed=embed, view=View)
+    def take_card(self) -> None:
+        self.player_decks[self.players_user[self.current_player]].append(self.deck.pop(0))
+        return
+    
+    def can_continue(self, player: discord.User) -> bool:
+        return self.get_sum_of(player=player) < 21
+    
+    def has_won(self, player: discord.User) -> bool:
+        return self.get_sum_of(player=player) == 21

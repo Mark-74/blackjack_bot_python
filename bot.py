@@ -1,6 +1,7 @@
 import discord, os, game
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import View
 from typing import Optional
 
 token = open('token.txt', 'r').readline()
@@ -26,6 +27,68 @@ class LobbyButton(discord.ui.View):
         if instances[interaction.guild_id].add(interaction.user):
             await interaction.response.send_message(f"{interaction.user.mention} has joined the lobby.")
         else: await interaction.response.send_message("You have already joined the lobby", ephemeral=True)
+
+class Choices(discord.ui.View):
+    def __init__(self, *, timeout=60):
+            super().__init__(timeout=timeout)
+    
+    @discord.ui.button(label="Take", emoji='🃏', custom_id='choice-take', style=discord.ButtonStyle.success)
+    async def btnTake(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if interaction.user == instances[interaction.guild_id].get_current_player():
+            curr = instances[interaction.guild_id]
+            player = curr.get_current_player()
+
+            if curr.has_won(interaction.user):
+                print("won")
+                await self.btnKeep.callback(interaction=interaction)
+                return
+            
+            curr.take_card()
+
+            if curr.can_continue(player=player):
+                embed = interaction.message.embeds.pop(0).remove_field(0).add_field(name="Your cards", value=curr.get_deck_from_player(player=player), inline=False)
+                await interaction.response.edit_message(embed=embed)
+
+            else:
+                embed = interaction.message.embeds.pop(0).remove_field(0).add_field(name="Your cards", value=curr.get_deck_from_player(player=player), inline=False)
+                await interaction.response.edit_message(embed=embed, view=None)
+                await self.btnKeep.callback(interaction=interaction)
+                
+        else:
+            await interaction.response.send_message("Wait for your turn!", ephemeral=True)
+
+    
+    @discord.ui.button(label="Keep", emoji='🖐', custom_id='choice-keep', style=discord.ButtonStyle.danger)
+    async def btnKeep(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if interaction.user == instances[interaction.guild_id].get_current_player():
+            if interaction.message.components.count(discord.ui.Button) != 0: await interaction.response.edit_message(view=None)
+            if instances[interaction.guild_id].next_player():
+                await round(interaction=interaction)
+            else:
+                await interaction.channel.send("finished players") #TODO: send results
+        else: 
+            await interaction.response.send_message("Wait for your turn!", ephemeral=True)
+
+    @discord.ui.button(label="Double", emoji='💸', custom_id='choice-double', style=discord.ButtonStyle.blurple)
+    async def btnDouble(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if interaction.user == instances[interaction.guild_id].get_current_player():
+            curr = instances[interaction.guild_id]
+            player = curr.get_current_player()
+
+            if curr.has_won(interaction.user):
+                print("won")
+                await self.btnKeep.callback(interaction=interaction)
+                return
+            
+            curr.take_card()
+            await interaction.response.edit_message(view=None)
+            await self.btnKeep.callback(interaction=interaction)
+                
+        else:
+            await interaction.response.send_message("Wait for your turn!", ephemeral=True)
+
+    async def on_timeout(self) -> None:
+        print("timed out")
         
 @bot.event
 async def on_ready():
@@ -50,13 +113,26 @@ async def createLobby(interaction: discord.Interaction):
         await interaction.response.send_message(view=LobbyButton())
     else: await interaction.response.send_message("There is already an existing lobby in this server, use ***/newgame*** to create a new lobby.", ephemeral=True)
 
+async def round(interaction: discord.Interaction) -> bool:
+        
+    curr = instances[interaction.guild_id]
+    player = curr.get_current_player()
+    #returns true if the game continues, else returns false
+    View = Choices()
+    embed = discord.Embed(title=f"{player}'s hand", description="Take a close look at your **cards** and decide what to do next!", color=0x5738d2) #TODO: add timestamp
+    embed.add_field(name="Your cards", value=curr.get_deck_from_player(player=player), inline=False)
+    embed.set_footer(text="---------------------------------------------------------------------------------")
+    await interaction.channel.send(content=f"{player.mention} would you like another card?", embed=embed, view=View)
+
 @bot.tree.command(name='start', description='starts the game.')
 async def start(interaction: discord.Interaction):
-    if instances[interaction.guild_id].is_playing() is False:
-        instances[interaction.guild_id].start()
-        await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
-        await instances[interaction.guild_id].round(channel=interaction.channel)
+    if instances.get(interaction.guild_id):
+        if instances[interaction.guild_id].is_playing() is False:
+            instances[interaction.guild_id].start()
+            await interaction.response.send_message(f"Game has started\n{instances[interaction.guild_id].briefing()}")
+            await round(interaction=interaction)
+        else:
+            await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***", ephemeral=True)
     else:
-        await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***", ephemeral=True)
-
+        await interaction.response.send_message("There isn't a lobby yet, create one with ***/lobby***", ephemeral=True)
 bot.run(token)
