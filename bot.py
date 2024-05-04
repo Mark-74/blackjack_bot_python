@@ -61,7 +61,12 @@ class Choices(discord.ui.View):
     @discord.ui.button(label="Keep", emoji='🖐', custom_id='choice-keep', style=discord.ButtonStyle.danger)
     async def btnKeep(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == instances[interaction.guild_id].get_current_player():
-            if interaction.message.components.count(discord.ui.Button) != 0: await interaction.response.edit_message(view=None)
+            #if interaction.message.components.count(discord.ui.Button) != 0: await interaction.response.edit_message(view=None)
+            try:
+                await interaction.response.edit_message(view=None)
+            except:
+                pass
+            
             if instances[interaction.guild_id].next_player():
                 await round(interaction=interaction)
             else:
@@ -73,6 +78,7 @@ class Choices(discord.ui.View):
     async def btnDouble(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == instances[interaction.guild_id].get_current_player():
             curr = instances[interaction.guild_id]
+            player = curr.get_current_player()
 
             if curr.has_won(interaction.user):
                 print("won")
@@ -80,7 +86,8 @@ class Choices(discord.ui.View):
                 return
             
             curr.take_card()
-            await interaction.response.edit_message(view=None)
+            embed = interaction.message.embeds.pop(0).remove_field(0).add_field(name="Your cards", value=curr.get_deck_from_player(player=player), inline=False)
+            await interaction.response.edit_message(embed=embed, view=None)
             await self.btnKeep.callback(interaction=interaction)
                 
         else:
