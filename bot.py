@@ -1,4 +1,4 @@
-import discord, os, game
+import discord, os, game, time
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View
@@ -29,7 +29,7 @@ class LobbyButton(discord.ui.View):
         else: await interaction.response.send_message("You have already joined the lobby", ephemeral=True)
 
 class Choices(discord.ui.View):
-    def __init__(self, *, timeout=60):
+    def __init__(self, *, timeout=None):
             super().__init__(timeout=timeout)
     
     @discord.ui.button(label="Take", emoji='🃏', custom_id='choice-take', style=discord.ButtonStyle.success)
@@ -70,7 +70,7 @@ class Choices(discord.ui.View):
             if instances[interaction.guild_id].next_player():
                 await round(interaction=interaction)
             else:
-                await interaction.channel.send("finished players") #TODO: send results
+                await dealer_round(interaction=interaction) #TODO: send results
         else: 
             await interaction.response.send_message("Wait for your turn!", ephemeral=True)
 
@@ -123,12 +123,28 @@ async def round(interaction: discord.Interaction) -> bool:
         
     curr = instances[interaction.guild_id]
     player = curr.get_current_player()
-    #returns true if the game continues, else returns false
+
     View = Choices()
     embed = discord.Embed(title=f"{player}'s hand", description="Take a close look at your **cards** and decide what to do next!", color=0x5738d2) #TODO: add timestamp
     embed.add_field(name="Your cards", value=curr.get_deck_from_player(player=player), inline=False)
     embed.set_footer(text="---------------------------------------------------------------------------------")
     await interaction.channel.send(content=f"{player.mention} would you like another card?", embed=embed, view=View)
+
+async def dealer_round(interaction: discord.Interaction):
+    curr = instances[interaction.guild_id]
+    message = await interaction.channel.send("Dealer's turn!")
+
+    while(True):
+        embed = embed = discord.Embed(title=f"Dealer's hand", color=0x5738d2)
+        embed.add_field(name="Dealer's cards", value=curr.get_dealer_deck(), inline=False)
+        embed.set_footer(text="---------------------------------------------------------------------------------")
+        message = await message.edit(embed=embed)
+
+        time.sleep(1)
+        if curr.dealer_must_stand():
+            break #game has ended
+        else:
+            curr.dealer_take_card()
 
 @bot.tree.command(name='start', description='starts the game.')
 async def start(interaction: discord.Interaction):

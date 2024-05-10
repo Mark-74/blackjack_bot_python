@@ -31,7 +31,7 @@ class gameInstance:
         else: 
             return int(card[1:])
         
-    def get_sum_of(self, player: discord.user.User):
+    def get_sum_of(self, player: discord.user.User) -> int:
         sum = 0
 
         deck = self.player_decks[player]  
@@ -45,7 +45,24 @@ class gameInstance:
             for card in deck: sum += self.Value(card)
         
         return sum
-     
+    
+    def get_dealer_sum(self) -> int:
+        sum = 0
+
+        deck = self.dealer_deck 
+        pivot = 1 if deck[0][1] == 'A' and deck[1][1] == 'A' else 2
+ 
+        for i in range(len(deck)):
+            sum += self.Value(deck[i]) if i >= pivot else self.Value(deck[i], ace_to_11=True)
+        
+        if sum > 21 and (deck[0][1] == 'A' or deck[1][1] == 'A'):
+            sum = 0
+            for card in deck: sum += self.Value(card)
+        
+        return sum
+    
+    def get_dealer_deck(self):
+        return self.dealer_deck
     def shuffle(self):
         for i in range(len(self.deck)):
             random_pos1, random_pos2 = random.randint(0, len(self.deck)-1), random.randint(0, len(self.deck)-1)
@@ -112,3 +129,10 @@ class gameInstance:
     
     def has_won(self, player: discord.User) -> bool:
         return self.get_sum_of(player=player) == 21
+    
+    def dealer_must_stand(self):
+        return self.get_dealer_sum() >= 17
+    
+    def dealer_take_card(self):
+        if not self.dealer_must_stand():
+            self.dealer_deck.append(self.deck.pop(0))
