@@ -31,6 +31,9 @@ class gameInstance:
         else: 
             return int(card[1:])
         
+    def is_game_finished(self) -> bool:
+        return self.current_player < self.number_of_players and self.dealer_must_stand()
+    
     def get_sum_of(self, player: discord.user.User) -> int:
         sum = 0
 
@@ -63,6 +66,7 @@ class gameInstance:
     
     def get_dealer_deck(self):
         return self.dealer_deck
+    
     def shuffle(self):
         for i in range(len(self.deck)):
             random_pos1, random_pos2 = random.randint(0, len(self.deck)-1), random.randint(0, len(self.deck)-1)
@@ -93,7 +97,7 @@ class gameInstance:
     def next_player(self) -> bool:
         #returns true if the game can continue, otherwise no
         self.current_player += 1
-        return True if self.current_player < self.number_of_players else False
+        return self.current_player < self.number_of_players
 
     def start(self) -> bool:
         self.status = True #update status

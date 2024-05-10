@@ -142,6 +142,7 @@ async def dealer_round(interaction: discord.Interaction):
 
         time.sleep(1)
         if curr.dealer_must_stand():
+            instances.pop(interaction.guild_id)
             break #game has ended
         else:
             curr.dealer_take_card()
@@ -157,4 +158,12 @@ async def start(interaction: discord.Interaction):
             await interaction.response.send_message("The game has already started, if you wish to restart it, use ***/newgame***", ephemeral=True)
     else:
         await interaction.response.send_message("There isn't a lobby yet, create one with ***/lobby***", ephemeral=True)
+
+@bot.tree.command(name='newgame', description='eliminates the current lobby.')
+async def newgame(interaction: discord.Interaction):
+    if interaction.user in instances[interaction.guild_id].players_user or instances[interaction.guild_id].is_game_finished():
+        instances.pop(interaction.guild_id)
+    else:
+        await interaction.response.send_message("You must be part of the game in order to delete it", ephemeral=True)
+
 bot.run(token)
